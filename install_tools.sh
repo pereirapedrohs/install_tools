@@ -1,138 +1,100 @@
 #!/bin/bash
 
-# Função para verificar se um comando existe
-check_command() {
-    command -v "$1" >/dev/null 2>&1
-}
+# Fonte das funções e scripts
+source ./utils.sh
+source ./infrastructure_management/install_terraform.sh
+source ./infrastructure_management/install_tfenv.sh
+source ./development_tools/install_vscode.sh
+source ./development_tools/install_slack.sh
+source ./development_tools/install_chrome.sh
+source ./development_tools/install_oh_my_zsh.sh
+source ./development_tools/install_postman.sh
+source ./development_tools/install_zoom.sh
+source ./cloud_services/install_aws_cli.sh
+source ./programming_languages/install_kubectl.sh
+source ./programming_languages/install_nodejs.sh
+source ./programming_languages/install_nvm.sh
+source ./programming_languages/install_python.sh
 
-# Função para instalar o Git
-install_git() {
-    echo "Instalando Git..."
-    sudo apt-get update
-    sudo apt-get install -y git
-    echo "Git instalado com sucesso!"
-    git --version
-}
-
-# Função para instalar pré-requisitos
-install_prerequisites() {
-    missing_tools=()
-
-    # Verifica se cada ferramenta está instalada
-    for tool in curl wget unzip git; do
-        if ! check_command "$tool"; then
-            missing_tools+=("$tool")
-        fi
-    done
-
-    # Se houver ferramentas faltando, pergunta ao usuário se deseja instalá-las
-    if [ ${#missing_tools[@]} -gt 0 ]; then
-        echo "As seguintes ferramentas não estão instaladas: ${missing_tools[*]}"
-        read -p "Deseja instalá-las agora? [y/n]: " install_choice
-        if [[ "$install_choice" == "y" || "$install_choice" == "Y" ]]; then
-            for tool in "${missing_tools[@]}"; do
-                if [ "$tool" == "git" ]; then
-                    install_git
-                else
-                    sudo apt-get install -y "$tool"
-                fi
-            done
-        else
-            echo "Não foi possível prosseguir sem as ferramentas necessárias. Abortando."
-            exit 1
-        fi
-    else
-        echo "Todas as ferramentas necessárias já estão instaladas."
-    fi
-}
-
-# Função para instalar Terraform
-install_terraform() {
-    echo "Buscando versões disponíveis do Terraform..."
-    
-    # Obtém a lista de versões disponíveis
-    versions=$(curl -s https://api.releases.hashicorp.com/v1/releases/terraform | grep -oP '"version":"\K[0-9]+\.[0-9]+\.[0-9]+(?=")' | sort -V)
-    
-    # Encontra a última versão (mais recente)
-    latest_version=$(echo "$versions" | tail -n 1)
-
-    echo "Última versão disponível: $latest_version"
-
-    # Exibe as versões disponíveis e pede para o usuário escolher uma
-    echo "Escolha uma versão para instalar (padrão: $latest_version):"
-    select version in $versions "Cancelar"; do
-        if [ "$version" == "Cancelar" ]; then
-            echo "Instalação cancelada."
-            return
-        elif [[ -n "$version" ]]; then
-            echo "Você escolheu a versão: $version"
-            break
-        else
-            echo "Opção inválida! Tente novamente."
-        fi
-    done
-
-    # Se o usuário não escolher nada, usa a última versão como padrão
-    version=${version:-$latest_version}
-
-    echo "Instalando Terraform versão $version..."
-    wget -O terraform.zip https://releases.hashicorp.com/terraform/$version/terraform_${version}_linux_amd64.zip
-    unzip terraform.zip
-    sudo mv terraform /usr/local/bin/
-    rm terraform.zip
-    
-    # Verifica se o Terraform foi instalado corretamente
-    echo "Terraform versão $version instalado com sucesso!"
-    terraform -v
-}
-
-# Função para instalar o VSCode
-install_vscode() {
-    echo "Instalando Visual Studio Code..."
-
-    # Adiciona a chave GPG da Microsoft e o repositório do VSCode
-    wget -qO- https://packages.microsoft.com/keys/microsoft.asc | gpg --dearmor > microsoft.gpg
-    sudo install -o root -g root -m 644 microsoft.gpg /usr/share/keyrings/
-    sudo sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/vscode stable main" > /etc/apt/sources.list.d/vscode.list'
-    rm microsoft.gpg
-
-    # Atualiza os pacotes e instala o VSCode
-    sudo apt-get update
-    sudo apt-get install -y code
-
-    # Verifica se o VSCode foi instalado corretamente
-    echo "Visual Studio Code instalado com sucesso!"
-    code --version
-}
-
-# Função para mostrar o menu
-show_menu() {
-    echo "Selecione a ferramenta que deseja instalar:"
-    echo "1) Terraform"
-    echo "2) Visual Studio Code"
-    echo "3) Sair"
-}
-
-# Verifica e instala pré-requisitos
-install_prerequisites
-
-# Loop do menu
+# Menu principal
 while true; do
-    show_menu
-    read -p "Escolha uma opção: " choice
-    case $choice in
+    echo ""
+    echo "==== Menu de Instalação de Ferramentas ===="
+    echo "1. Gerenciamento de Infraestrutura"
+    echo "2. Ferramentas de Desenvolvimento"
+    echo "3. Linguagens de Programação"
+    echo "4. Sair"
+    echo "==========================================="
+    echo ""
+    read -p "Escolha uma categoria: " category_choice
+    
+    case $category_choice in
         1)
-            install_terraform
+            echo ""
+            echo "==== Gerenciamento de Infraestrutura ===="
+            echo "1. Instalar Terraform"
+            echo "2. Instalar tfenv"
+            echo "3. Instalar AWS CLI"
+            echo "4. Voltar"
+            echo "========================================="
+            echo ""
+            read -p "Escolha uma opção: " infra_choice
+            
+            case $infra_choice in
+                1) install_terraform ;;
+                2) install_tfenv ;;
+                3) install_aws_cli ;;
+                4) continue ;;
+                *) echo "Opção inválida. Tente novamente." ;;
+            esac
             ;;
         2)
-            install_vscode
+            echo ""
+            echo "==== Ferramentas de Desenvolvimento ===="
+            echo "1. Instalar Visual Studio Code"
+            echo "2. Instalar Slack"
+            echo "3. Instalar Chrome"
+            echo "4. Instalar Oh My Zsh"
+            echo "5. Instalar Postman"
+            echo "6. Instalar Zoom"
+            echo "7. Voltar"
+            echo "========================================="
+            echo ""
+            read -p "Escolha uma opção: " dev_choice
+            
+            case $dev_choice in
+                1) install_vscode ;;
+                2) install_slack ;;
+                3) install_chrome ;;
+                4) install_oh_my_zsh ;;
+                5) install_postman ;;
+                6) install_zoom ;;
+                7) continue ;;
+                *) echo "Opção inválida. Tente novamente." ;;
+            esac
             ;;
         3)
-            echo "Saindo..."
-            break
+            echo ""
+            echo "==== Linguagens de Programação ===="
+            echo "1. Instalar Node.js"
+            echo "2. Instalar nvm"
+            echo "3. Instalar Python"
+            echo "4. Instalar Kubernetes"
+            echo "V. Voltar"
+            echo "==================================="
+            read -p "Escolha uma opção: " programming_choice
+
+            case $programming_choice in
+                1) install_nodejs ;;
+                2) install_nvm ;;
+                3) install_python ;;
+                4) install_kubectl ;;
+                5) continue ;;
+                *) echo "Opção inválida! Tente novamente." ;;
+            esac
             ;;
-        *)
-            echo "Opção inválida! Tente novamente."
-            ;;
+
+        3) echo "Saindo..."; exit ;;
+        *) echo "Opção inválida. Tente novamente." ;;
     esac
 done
